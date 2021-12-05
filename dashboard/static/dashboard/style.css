@@ -1,0 +1,92 @@
+html,body {
+	font-family: Arial, sans-serif;
+	font-size: 15px;
+	line-height:1.5;
+	margin: 0;
+	background-image: url("growth-telescope.jpg");
+	height: 100%;
+	width: 100%;
+	overflow-y: auto;
+	overflow-x: auto;
+}
+a {
+	text-decoration: none;
+}
+
+nav ul {
+    list-style: none;
+    background-color: white;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+    overflow: hidden;
+}
+
+nav li {
+	display: inline-block;
+	float: left;
+	color: black;
+}
+
+li a {
+	color: black;
+	text-align: center;
+	display: block;
+	padding: 20px;
+	text-decoration: none;
+}
+
+li a:hover {
+	background-color: grey;
+	color: white;
+}
+
+.background-box {
+	margin: 10px;
+	padding: 10px;
+	background-color: white;
+	opacity: 80%;
+	overflow: auto;
+}
+
+table {
+	font-size: 12px;
+	border-collapse: collapse;
+	width: 100%;
+}
+
+td, th {
+	border: 2px solid #dddddd;
+	text-align: left;
+	padding: 8px;
+}
+
+tr:nth-child(even) {
+	background-color: #dddddd;
+}
+
+button {
+	opacity: 100%;
+}
+
+.row{margin: 0;}
+
+.card {
+  /* Add shadows to create the "card" effect */
+  margin: 10px;
+  float: left;
+  width: 100vh;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;
+  opacity: 100%
+}
+
+/* On mouse-over, add a deeper shadow */
+.card:hover {
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+}
+
+/* Add some padding inside the card container */
+.container {
+  padding: 2px 16px;
+}

@@ -1,0 +1,12 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %} Dashboard {% endblock %}
+
+
+{% block content %}
+    <form method="POST" action="/check/">
+        {% csrf_token %}
+        {{form}}
+        <button type="submit" class="btn btn-primary" style="margin-top: 5px;">Check</button>
+    </form>
+{% endblock %}
