@@ -13,9 +13,10 @@
 	<!-- for the navigation bar -->
 	<nav>
 		<ul>
-			<li style="padding-left: 10px; padding-right: 10px;"><h3>Growth India</h3></li>
-			<li><a href="">Home</a></li>
+			<li style="padding-left: 10px; padding-right: 10px;"><h3>GROWTH India</h3></li>
+			<li><a href="/home">Home</a></li>
 			{% if user.is_authenticated  %}
+			<li><a href="/query">Query</a></li>
 			<li><a href="/logout">Logout</a></li>
 			<li style="padding: 20px; float: right;">Logged in as {{ user.username }}</li>
 

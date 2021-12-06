@@ -24,5 +24,6 @@ urlpatterns = [
     path('register/', userview.register, name='register'),
     path('home/', dashview.index, name='dashboard'),
     path('check/', dashview.check, name='dashboard'),
+    path('query/', dashview.query, name='Query'),
     path('',include("django.contrib.auth.urls"))
 ]
