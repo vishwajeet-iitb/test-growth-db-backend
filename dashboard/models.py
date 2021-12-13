@@ -7,7 +7,7 @@ class Proposal(models.Model):
     heading = models.CharField(max_length=255)
 
 class Image(models.Model):
-    date_observed = models.DateField(auto_now=False,auto_now_add=False)
+    date_observed = models.DateField(auto_now=False,auto_now_add=True) #has to be changed
     jd = models.FloatField(unique=True,blank=False)
     proposal_no = models.CharField(max_length=20)
 
@@ -21,8 +21,8 @@ class Image(models.Model):
     lim_mag = models.FloatField()
     psf_mag = models.FloatField()
     psf_merr = models.FloatField()
-    apr_mag = models.FloatField()
-    apr_merr = models.FloatField()
+    apr_mag = models.FloatField() #check this header key for this
+    apr_merr = models.FloatField() #check this header key for this
 
     filepath = models.CharField(max_length=120, unique=True, blank=False)
 

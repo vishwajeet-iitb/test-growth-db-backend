@@ -4,7 +4,7 @@
 
 
 {% block content %}
-    <form method="POST" action="/check/">
+    <form method="POST" action="/query/">
         {% csrf_token %}
         {{form}}
         <button type="submit" class="btn btn-primary" style="margin-top: 5px;">Check</button>
