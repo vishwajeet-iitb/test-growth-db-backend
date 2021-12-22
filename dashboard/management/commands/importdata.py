@@ -9,6 +9,30 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         counts = 0
         counte = 0
+        headers = {
+            "date_observed":"DATE-OBS",
+            "jd" :'JD',
+            'proposal_no' :'PROPNUMS',
+            'filter_used' : 'FILTER',
+            'exposure' : 'EXPOSURE',
+            'air_mass' : 'AIRMASS',
+            'ccd_temp' : 'CCD_TEMP',
+            'image_type' : 'IMAGETYP',
+            'focus_value' : 'FOCUSER',
+            'fwhm' : 'FWHM',
+            'lim_mag' : 'LIM_MAG',
+            'psf_mag' : 'PSF_mag', 
+            'psf_merr' : 'PSF_merr', 
+            'apr_mag' :0, 
+            'apr_merr' :0, 
+            'tel_alt' : 'TEL_ALT', 
+            'tel_az' : 'TEL_AZ',  
+            'ref_ra' : 'CRVAL1', 
+            'ref_dec' : 'CRVAL2', 
+            'tar_ra' : 'TARRA', 
+            'tar_dec' : 'TARDEC', 
+            'tar_name' : 'OBJECT',
+        }
         PATH = '/home/adithya/iSURP/data/20211124'
         targets = [name for name in os.listdir(PATH) if os.path.exists(os.path.join(PATH,name,'reduced'))]
         print(targets)

@@ -7,13 +7,6 @@ from numpy import string_
 from dashboard.models import Image, Proposal
 from .forms import CheckProposal, ImageQuery
 
-import os
-import astropy.io.fits
-import astropy.stats
-from matplotlib import pyplot as plt
-import io
-import urllib, base64
-import math
 
 # Create your views here.
 def index(response):
@@ -52,34 +45,17 @@ def query(response):
             print(kwargs)
             queriedImages = Image.objects.filter(**kwargs)
             print(len(queriedImages))
-            
-            fig = plt.figure(figsize=(7, 7))
-            col = 2
-            row = math.ceil(len(queriedImages)/2)
-            i = 1;
-            plt.subplots_adjust(left=0.1,
-                    bottom=0.1, 
-                    right=0.9, 
-                    top=0.9, 
-                    wspace=0.7, 
-                    hspace=0.4)
+            i = 0
+            result = []
             for image in queriedImages:
                 allowAccess = Proposal.objects.filter(user=response.user,heading=image.proposal_no)
                 if allowAccess or response.user.is_superuser:
-                    fits = astropy.io.fits.open(os.path.join(image.filepath))
-                    mean, median, std = astropy.stats.sigma_clipped_stats(fits[0].data)
-                    fig.add_subplot(row,col,i)
-                    plt.imshow(fits[0].data, vmin=mean-std, vmax=mean+3*std, cmap='binary')
-                    plt.title(os.path.basename(image.filepath))
-                    i+=1
-            
-            fig = plt.gcf()
-            buf = io.BytesIO()
-            fig.savefig(buf,format='png')
-            buf.seek(0)
-            string = base64.b64encode(buf.read())
-            uri = urllib.parse.quote(string)
-            return render(response,"dashboard/result.html",{'data':uri})
+                    i=i+1
+                    result.append(image)
+                    
+            print(result)
+            msg = "Found %s & displaying %s"%(len(queriedImages),i)
+            return render(response,"dashboard/result.html",{'data':result,"txt":msg})
                 
         else:
             return HttpResponseRedirect("/query")

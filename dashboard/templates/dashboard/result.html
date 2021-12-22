@@ -4,5 +4,23 @@
 
 
 {% block content %}
-    <img src="data::image/png/;base64,{{data}}" alt='no image to show'>
+    <h1>{{txt}}</h1>
+    <table style="width:100%">
+        <tr>
+          <th>Image</th>
+          <th>RA</th>
+          <th>Dec</th>
+          <th>Target</th>
+          <th>Filter Used</th>
+        </tr>
+        {% for image in data %}
+        <tr>
+            <td>{{image.filepath}}</td>
+            <td>{{image.tar_ra}}</td>
+            <td>{{image.tar_dec}}</td>
+            <td>{{image.tar_name}}</td>
+            <td>{{image.filter_used}}</td>
+        </tr>
+      {% endfor %}
+    </table>
 {% endblock %}
