@@ -7,20 +7,25 @@
     <h1>{{txt}}</h1>
     <table style="width:100%">
         <tr>
+          <th></th>
           <th>Image</th>
-          <th>RA</th>
-          <th>Dec</th>
-          <th>Target</th>
-          <th>Filter Used</th>
+          {% for col in showcols %}
+          <th>{{ col }}</th>
+          {% endfor %}
         </tr>
         {% for image in data %}
         <tr>
-            <td>{{image.filepath}}</td>
-            <td>{{image.tar_ra}}</td>
-            <td>{{image.tar_dec}}</td>
-            <td>{{image.tar_name}}</td>
-            <td>{{image.filter_used}}</td>
+            <td><input type="checkbox" name="c{{image.pk}}"></td>
+            <td>{{ image.filepath }}</td>
+            {% for col in showcols %}
+            {% for key,value in image.items %}
+              {% if key == col %}
+              <td>{{ value }}</td>
+              {% endif %}
+            {% endfor %}
+            {% endfor %}
         </tr>
       {% endfor %}
     </table>
+    <button>Export csv</button>
 {% endblock %}
