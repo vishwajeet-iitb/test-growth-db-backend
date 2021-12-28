@@ -135,9 +135,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR("Error adding to database"))
             print(e)
             print("file name %s"%PATH)
-            clash = Image.objects.filter(jd=obj['jd'])
-            for i in clash:
-                print(i.filepath)
             return 0
 
     def editImage(self,PATH):
