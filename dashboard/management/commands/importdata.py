@@ -1,3 +1,4 @@
+from genericpath import isdir
 from math import nan
 from django.core.management.base import BaseCommand
 from dashboard.models import Image
@@ -17,6 +18,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         counts = 0
         counte = 0
+        countedit = 0
         
         add = options['add']
         edit = options['edit']
@@ -25,20 +27,34 @@ class Command(BaseCommand):
         bulk = options['i']
 
         if add != None and folder == None and day == None and bulk == None and edit == None:
+            if not os.path.exists(add):
+                self.stdout.write(self.style.ERROR("Path does not exist"))
+                return
             res = self.addImage(add)
             if res == 0:
                 counte = counte+1
             elif res == 2:
                 counts = counts+1
+            elif res == 1:
+                countedit = countedit+1
         elif add == None and folder != None and day == None and bulk == None and edit == None:
-            [counts,counte] = self.addImages(folder)   
+            if not os.path.exists(folder):
+                self.stdout.write(self.style.ERROR("Path does not exist"))
+                return
+            [counts,counte,countedit] = self.addImages(folder)   
         elif add == None and folder == None and day != None and bulk == None and edit == None:
-            [counts,counte] = self.addDay(day)
+            if not os.path.exists(day):
+                self.stdout.write(self.style.ERROR("Path does not exist"))
+                return
+            [counts,counte, countedit] = self.addDay(day)
         elif add == None and folder == None and day == None and bulk != None and edit == None:
             # import all data
             day1 = bulk[1]
             day2 = bulk[2]
             PATH = bulk[0]
+            if not os.path.exists(PATH):
+                self.stdout.write(self.style.ERROR("Path does not exist"))
+                return
             try:
                 start = datetime.datetime.strptime(day1,'%Y%m%d')
                 end = datetime.datetime.strptime(day2,'%Y%m%d')
@@ -49,9 +65,10 @@ class Command(BaseCommand):
                     name = start.strftime('%Y%m%d')
                     print(name)
                     if os.path.exists(os.path.join(PATH,name)):
-                        [success,fail] = self.addDay(os.path.join(PATH,name))
+                        [success,fail,edit] = self.addDay(os.path.join(PATH,name))
                         counts = counts + success
                         counte = counte + fail
+                        countedit = countedit + edit
                     else:
                         self.stdout.write(self.style.WARNING("Folder of %s does not exists"%name))
 
@@ -63,26 +80,36 @@ class Command(BaseCommand):
                 counte = counte+1
             elif res == 2:
                 counts = counts+1
+            elif res == 1:
+                countedit = countedit+1
 
         self.stdout.write(self.style.SUCCESS("Added %s entries"%counts))
+        self.stdout.write(self.style.SUCCESS("Updated %s entries"%countedit))
         self.stdout.write(self.style.WARNING("Unable to add %s entries"%counte))
 
     def addDay(self,PATH):
         counts = 0
         counte = 0
+        countedit = 0 
         ignore = ['fig','files','flat','test','bias']
-        targets = [name for name in os.listdir(PATH) if os.path.exists(os.path.join(PATH,name,'reduced')) and not name in ignore]
+        targets = [name for name in os.listdir(PATH) if  not name in ignore and isdir(os.path.join(PATH,name))]
         print(targets)
         for folder in targets:
-            url = os.path.join(PATH,folder,'reduced')
-            [success,fail] = self.addImages(url)
+            if os.path.exists(os.path.join(PATH,folder,'reduced')):
+                url = os.path.join(PATH,folder,'reduced')
+            else:
+                print("Reduced folder does not exist in ",folder)
+                return [counts, counte, countedit]
+            [success,fail,edit] = self.addImages(url)
             counts = counts + success
             counte = counte + fail
-        return [counts,counte]
+            countedit = countedit + edit
+        return [counts, counte, countedit]
 
     def addImages(self,PATH):
         counts = 0
         counte = 0
+        countedit = 0
         headers = Image.headers
         cols = headers.keys()
         images = [name for name in os.listdir(PATH) if name.endswith('-RA.wcs.proc.fits')]
@@ -92,9 +119,11 @@ class Command(BaseCommand):
                 counte = counte+1
             elif res == 2:
                 counts = counts+1
+            elif res == 1:
+                countedit = countedit+1
             
 
-        return [counts,counte]
+        return [counts,counte,countedit]
 
     def addImage(self,PATH):
         if Image.objects.filter(filepath=PATH):
@@ -121,16 +150,17 @@ class Command(BaseCommand):
                 obj[col] = hdu.header[headers[col]]
             except:
                 obj[col] = nan
-        obj['filepath'] = PATH
+        obj['filepath'] = os.path.abspath(PATH)
         try:
             dbimage = Image(**obj)
-            if Image.objects.filter(filepath=PATH):
-                record = Image.objects.filter(filepath=PATH)
+            record = Image.objects.filter(filepath=os.path.abspath(PATH))
+            if record.exists():
                 record = dbimage
                 record.save()
+                return 1
             else:
                 dbimage.save()
-            return 2
+                return 2
         except Exception as e:
             self.stdout.write(self.style.ERROR("Error adding to database"))
             print(e)
