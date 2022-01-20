@@ -14,6 +14,7 @@ class Command(BaseCommand):
         parser.add_argument('--dir',help="Add images from a path")
         parser.add_argument('--day',help="Add all images from a day")
         parser.add_argument('-i', nargs=3, help="Find folders of days and add them. Provide path, startdate, enddate in the format yyyymmdd")
+        parser.add_argument('--header',help='Add custom header (-RA.wcs.proc.header.fits) files rather than default')
 
     def handle(self, *args, **options):
         counts = 0
@@ -25,6 +26,15 @@ class Command(BaseCommand):
         folder = options['dir']
         day = options['day']
         bulk = options['i']
+        headerfile = options['header']
+
+        if headerfile=='True':
+            headerfile = True
+        elif headerfile=='False':
+            headerfile = False
+        else:
+            self.stdout.write(self.style.ERROR("Unknown argument for header"))
+            return
 
         if add != None and folder == None and day == None and bulk == None and edit == None:
             if not os.path.exists(add):
@@ -41,12 +51,12 @@ class Command(BaseCommand):
             if not os.path.exists(folder):
                 self.stdout.write(self.style.ERROR("Path does not exist"))
                 return
-            [counts,counte,countedit] = self.addImages(folder)   
+            [counts,counte,countedit] = self.addImages(folder,headerfile)   
         elif add == None and folder == None and day != None and bulk == None and edit == None:
             if not os.path.exists(day):
                 self.stdout.write(self.style.ERROR("Path does not exist"))
                 return
-            [counts,counte, countedit] = self.addDay(day)
+            [counts,counte, countedit] = self.addDay(day,headerfile)
         elif add == None and folder == None and day == None and bulk != None and edit == None:
             # import all data
             day1 = bulk[1]
@@ -65,7 +75,7 @@ class Command(BaseCommand):
                     name = start.strftime('%Y%m%d')
                     print(name)
                     if os.path.exists(os.path.join(PATH,name)):
-                        [success,fail,edit] = self.addDay(os.path.join(PATH,name))
+                        [success,fail,edit] = self.addDay(os.path.join(PATH,name),headerfile)
                         counts = counts + success
                         counte = counte + fail
                         countedit = countedit + edit
@@ -87,7 +97,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Updated %s entries"%countedit))
         self.stdout.write(self.style.WARNING("Unable to add %s entries"%counte))
 
-    def addDay(self,PATH):
+    def addDay(self,PATH,h):
         counts = 0
         counte = 0
         countedit = 0 
@@ -100,19 +110,18 @@ class Command(BaseCommand):
             else:
                 print("Reduced folder does not exist in ",folder)
                 return [counts, counte, countedit]
-            [success,fail,edit] = self.addImages(url)
+            [success,fail,edit] = self.addImages(url, h)
             counts = counts + success
             counte = counte + fail
             countedit = countedit + edit
         return [counts, counte, countedit]
 
-    def addImages(self,PATH):
+    def addImages(self,PATH, h):
         counts = 0
         counte = 0
         countedit = 0
-        headers = Image.headers
-        cols = headers.keys()
-        images = [name for name in os.listdir(PATH) if name.endswith('-RA.wcs.proc.fits')]
+        extension_name = '-RA.wcs.proc.fits' if not h else '-RA.wcs.proc.header.fits'
+        images = [name for name in os.listdir(PATH) if name.endswith(extension_name)]
         for image in images:
             res = self.addImage(os.path.join(PATH,image))
             if res == 0:
