@@ -49,7 +49,7 @@ class Image(models.Model):
     center_RA = models.FloatField(null=False, blank=False)
     center_Dec = models.FloatField(null=False, blank=False)
     obs_cycle = models.CharField(max_length=2, null=True, blank=True)
-    camera = models.CharField(max_length=20, blank=True, null=True)
+    camera = models.CharField(max_length=7, blank=True, null=True)
 
 
     headers = {

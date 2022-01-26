@@ -260,7 +260,14 @@ class Command(BaseCommand):
             obj['center_RA'] = ra
             obj['center_Dec'] = dec
             obj['healpy_pxl'] = hp.pixelfunc.ang2pix(NSIDE,theta=np.deg2rad(dec),phi=np.deg2rad(ra), lonlat=True)
-                
+            
+            # camera
+            if center_y*2 == 1472:
+                obj['camera'] = 'Apogee'
+            elif center_y*2 == 4108:
+                obj['camera'] = 'Andor'
+            else:
+                obj['camera'] = 'SBIG'
         # if difference file exists
         [head, tail] = os.path.split(PATH)
         diff_files = [name for name in os.listdir(head) if name.endswith('.diff')]
@@ -270,9 +277,7 @@ class Command(BaseCommand):
                 obj['diff_exists'] = True
         if obj.get('diff_exists')== None:
             obj['diff_exists'] = False
-
-        #camera
-        obj['camera'] = ''
+    
 
         # obs cycle
         try:
