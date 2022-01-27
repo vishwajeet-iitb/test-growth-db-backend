@@ -2,7 +2,8 @@ from genericpath import isdir
 from math import nan
 from django.core.management.base import BaseCommand
 from dashboard.models import Image
-import datetime, pytz
+import datetime
+from django.utils import dateparse
 import os, warnings
 import astropy.io.fits
 import numpy as np
@@ -16,7 +17,6 @@ class Command(BaseCommand):
         parser.add_argument('--dir',help="Add images from a path")
         parser.add_argument('--day',help="Add all images from a day")
         parser.add_argument('-i', nargs=3, help="Find folders of days and add them. Provide path, startdate, enddate in the format yyyymmdd")
-        parser.add_argument('--header',help='Add custom header (-RA.wcs.proc.header.fits) files rather than default')
         parser.add_argument('--migrate', nargs=2 ,help='Migrate file path to NAS. Inputs - date in format yyyymmdd and new path including the folder name')
         parser.add_argument('--remake', help='Add new fields to database based on headers of fits file')
 
@@ -29,20 +29,8 @@ class Command(BaseCommand):
         folder = options['dir']
         day = options['day']
         bulk = options['i']
-        headerfile = options['header']
         migrateData = options['migrate']
         remakeParam = options['remake']
-
-        if headerfile != None:
-            if headerfile=='True':
-                headerfile = True
-            elif headerfile=='False':
-                headerfile = False
-            else:
-                self.stdout.write(self.style.ERROR("Unknown argument for --header"))
-                return
-        else:
-            headerfile = False
         
 
         if add != None and folder == None and day == None and bulk == None and migrateData == None and remakeParam == None:
@@ -69,7 +57,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR("Path does not exist"))
                 return
             
-            [count_s,count_err,countedit] = self.addImages(folder,headerfile)   
+            [count_s,count_err,countedit] = self.addImages(folder)   
         
         elif add == None and folder == None and day != None and bulk == None and migrateData == None and remakeParam == None:
             
@@ -77,7 +65,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR("Path does not exist"))
                 return
             
-            [count_s,count_err, countedit] = self.addDay(day,headerfile)
+            [count_s,count_err, countedit] = self.addDay(day)
         
         elif add == None and folder == None and day == None and bulk != None and migrateData == None and remakeParam == None:
             # import all data
@@ -99,7 +87,7 @@ class Command(BaseCommand):
                     name = start.strftime('%Y%m%d')
                     print(name)
                     if os.path.exists(os.path.join(PATH,name)):
-                        [success,fail,edit] = self.addDay(os.path.join(PATH,name),headerfile)
+                        [success,fail,edit] = self.addDay(os.path.join(PATH,name))
                         count_s = count_s + success
                         count_err = count_err + fail
                         countedit = countedit + edit
@@ -122,12 +110,12 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("Updated %s entries"%countedit))
             self.stdout.write(self.style.WARNING("Unable to add %s entries"%count_err))
 
-    def addDay(self,PATH,h):
+    def addDay(self,PATH):
         count_s = 0
         count_err = 0
         countedit = 0 
 
-        ignore = ['fig','files','flat','test','bias']
+        ignore = ['fig','files','flat','test','bias','panstarrs','bad_flats','reduced','dark','flats','focus','other_objs','fw_test']
         
         targets = [name for name in os.listdir(PATH) if  not name in ignore and isdir(os.path.join(PATH,name))]
         print(targets)
@@ -142,7 +130,7 @@ class Command(BaseCommand):
                 print("Reduced folder does not exist in ",folder)
                 return [count_s, count_err, countedit]
             
-            [success,fail,edit] = self.addImages(url, h)
+            [success,fail,edit] = self.addImages(url)
             
             count_s = count_s + success
             count_err = count_err + fail
@@ -151,18 +139,19 @@ class Command(BaseCommand):
         
         return [count_s, count_err, countedit]
 
-    def addImages(self,PATH, h):
+    def addImages(self,PATH):
         count_s = 0
         count_err = 0
         countedit = 0
-
-        extension_name = '-RA.wcs.proc.fits' if not h else '-RA.wcs.proc.header.fits'
         
-        images = [name for name in os.listdir(PATH) if name.endswith(extension_name)]
+        images = [name for name in os.listdir(PATH) if name.endswith('-RA.wcs.proc.fits')]
         
         for image in images:
             try:
-                res = self.addImage(os.path.join(PATH,image),h)
+                if image.count('-RA.wcs.proc')==1:
+                    res = self.addImage(os.path.join(PATH,image))
+                else:
+                    res = 5
             except  Exception as e:
                 res = 0
                 print('Unable to add filename ', os.path.join(PATH,image))
@@ -178,51 +167,62 @@ class Command(BaseCommand):
 
         return [count_s,count_err,countedit]
 
-    def addImage(self,PATH,h):
+    def addImage(self,PATH):
         
         NSIDE = 64 # for healpix
 
         headers = Image.headers
         cols = headers.keys()
-        
-        fits = astropy.io.fits.open(PATH)
-        hdu = fits[0]
         obj = {}
+
+        header_path = PATH.replace('-RA.wcs.proc.fits','-RA.wcs.proc.header.fits')
+        
+        if os.path.exists(header_path):
+            obj['header_exists'] = True
+            fits = astropy.io.fits.open(header_path)
+        else:
+            obj['header_exists'] = False
+            fits = astropy.io.fits.open(PATH)
+
+        hdu = fits[0]
+        
+        obj['filepath'] = os.path.abspath(PATH)
         
         for col in cols:
             # convert and store datetime
             if col=='date_observed':
                 warnings.simplefilter("ignore")
+                # try:
+                #     d = datetime.datetime.strptime(hdu.header[headers[col]].strip(), "%Y-%m-%dT%H:%M:%S.%f" )
+                # except:
+                #     try:
+                #         clean_date = hdu.header[headers[col]].strip()
+                #         lastT = clean_date.rfind('T')
+                #         clean_date = clean_date[:lastT]
+                #         d = datetime.datetime.strptime(clean_date.strip(), "%Y-%m-%dT%H:%M:%S.%f" )
+                #     except:
+                #         try:
+                #             d = datetime.datetime.strptime(hdu.header[headers[col]].strip(), "%Y-%m-%d %H:%M:%S.%f" )
+                #         except Exception as e:
+                #             self.stdout.write(self.style.ERROR("Unable to add datetime in %s"%PATH))
+                #             return 0
                 try:
-                    d = datetime.datetime.strptime(hdu.header[headers[col]], "%Y-%m-%dT%H:%M:%S.%f" )
-                except:
-                    try:
-                        d = datetime.datetime.strptime(hdu.header[headers[col]], "%Y-%m-%d %H:%M:%S.%f" )
-                    except:
-                        pass
+                    d = dateparse.parse_datetime(hdu.header[headers[col]])
+                    if d == None:
+                        self.stdout.write(self.style.ERROR("Unable to add datetime in %s"%PATH))
 
-                d = pytz.timezone('UTC').localize(d)
-                obj[col] = d
+                        return 0
+                        
+                    obj[col] = d
+                except:
+                    self.stdout.write(self.style.ERROR("Unable to add datetime in %s"%PATH))
+                    return 0
+                #d = pytz.timezone('UTC').localize(d)
             
             try:
                 obj[col] = hdu.header[headers[col]]
             except:
                 obj[col] = nan
-
-        # for special header files
-        if h:
-            obj['header_exists'] = True
-            [head, tail] = os.path.split(PATH)
-            new_file_name = tail.replace('-RA.wcs.proc.header.fits','-RA.wcs.proc.fits')
-            new_path = os.path.join(head,new_file_name)
-            if os.path.exists(new_path):
-                obj['filepath'] = os.path.abspath(new_path)
-            else:
-                self.stdout.write(self.style.ERROR("Image file does not exist for %s"%PATH))
-                return 0
-        else:
-            obj['header_exists'] = False
-            obj['filepath'] = os.path.abspath(PATH)
             
 
         # Healpix        
@@ -235,9 +235,8 @@ class Command(BaseCommand):
 
         if w!=None:
             try:
-                if h:
-                    real_path = obj['filepath']
-                    real_img = astropy.io.fits.open(real_path)
+                if obj['header_exists']:
+                    real_img = astropy.io.fits.open(PATH)
                     center_x = real_img[0].header['NAXIS1']/2
                     center_y = real_img[0].header['NAXIS2']/2
                 else:
@@ -268,6 +267,7 @@ class Command(BaseCommand):
                 obj['camera'] = 'Andor'
             else:
                 obj['camera'] = 'SBIG'
+
         # if difference file exists
         [head, tail] = os.path.split(PATH)
         diff_files = [name for name in os.listdir(head) if name.endswith('.diff')]
@@ -302,6 +302,7 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(self.style.ERROR("Error adding to database"))
             print(e)
+            print(obj['date_observed'])
             print("file name %s"%PATH)
             return 0
 
