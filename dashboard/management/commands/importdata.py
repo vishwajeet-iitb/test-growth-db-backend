@@ -20,6 +20,7 @@ class Command(BaseCommand):
         parser.add_argument('-i', nargs=3, help="Find folders of days and add them. Provide path, startdate, enddate in the format yyyymmdd")
         parser.add_argument('--migrate', nargs=2 ,help='Migrate file path to NAS. Inputs - date in format yyyymmdd and new path including the folder name')
         parser.add_argument('--remake', help='Add new fields to database based on headers of fits file')
+        parser.add_argument('--header',help="False if respective header file should not be used for making the database")
 
     def handle(self, *args, **options):
         count_s = 0
@@ -32,7 +33,7 @@ class Command(BaseCommand):
         bulk = options['i']
         migrateData = options['migrate']
         remakeParam = options['remake']
-        
+        headerRequired = False if options['header']=='False' else True        
 
         if add != None and folder == None and day == None and bulk == None and migrateData == None and remakeParam == None:
             if not os.path.exists(add):
@@ -40,7 +41,7 @@ class Command(BaseCommand):
                 return
             
             try:
-                res = self.addImage(add)
+                res = self.addImage(add, headerRequired)
             except:
                 res = 0
                 print('Unable to add filename ', add)
@@ -58,7 +59,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR("Path does not exist"))
                 return
             
-            [count_s,count_err,countedit] = self.addImages(folder)   
+            [count_s,count_err,countedit] = self.addImages(folder, headerRequired)   
         
         elif add == None and folder == None and day != None and bulk == None and migrateData == None and remakeParam == None:
             
@@ -66,7 +67,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR("Path does not exist"))
                 return
             
-            [count_s,count_err, countedit] = self.addDay(day)
+            [count_s,count_err, countedit] = self.addDay(day, headerRequired)
         
         elif add == None and folder == None and day == None and bulk != None and migrateData == None and remakeParam == None:
             # import all data
@@ -88,7 +89,7 @@ class Command(BaseCommand):
                     name = start.strftime('%Y%m%d')
                     print(name)
                     if os.path.exists(os.path.join(PATH,name)):
-                        [success,fail,edit] = self.addDay(os.path.join(PATH,name))
+                        [success,fail,edit] = self.addDay(os.path.join(PATH,name), headerRequired)
                         count_s = count_s + success
                         count_err = count_err + fail
                         countedit = countedit + edit
@@ -111,7 +112,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("Updated %s entries"%countedit))
             self.stdout.write(self.style.WARNING("Unable to add %s entries"%count_err))
 
-    def addDay(self,PATH):
+    def addDay(self,PATH, headerRequired):
         count_s = 0
         count_err = 0
         countedit = 0 
@@ -131,7 +132,7 @@ class Command(BaseCommand):
                 print("Reduced folder does not exist in ",folder)
                 return [count_s, count_err, countedit]
             
-            [success,fail,edit] = self.addImages(url)
+            [success,fail,edit] = self.addImages(url, headerRequired)
             
             count_s = count_s + success
             count_err = count_err + fail
@@ -140,7 +141,7 @@ class Command(BaseCommand):
         
         return [count_s, count_err, countedit]
 
-    def addImages(self,PATH):
+    def addImages(self,PATH,headerRequired):
         count_s = 0
         count_err = 0
         countedit = 0
@@ -150,7 +151,7 @@ class Command(BaseCommand):
         for image in images:
             try:
                 if image.count('-RA.wcs.proc')==1:
-                    res = self.addImage(os.path.join(PATH,image))
+                    res = self.addImage(os.path.join(PATH,image),headerRequired)
                 else:
                     res = 5
             except  Exception as e:
@@ -168,7 +169,7 @@ class Command(BaseCommand):
 
         return [count_s,count_err,countedit]
 
-    def addImage(self,PATH):
+    def addImage(self,PATH,headerRequired):
         
         NSIDE = 64 # for healpix
 
@@ -178,7 +179,7 @@ class Command(BaseCommand):
 
         header_path = PATH.replace('-RA.wcs.proc.fits','-RA.wcs.proc.header.fits')
         
-        if os.path.exists(header_path):
+        if os.path.exists(header_path) and headerRequired:
             obj['header_exists'] = True
             fits = astropy.io.fits.open(header_path)
         else:
