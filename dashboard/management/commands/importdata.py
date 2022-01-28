@@ -213,14 +213,22 @@ class Command(BaseCommand):
                             d = pytz.timezone('UTC').localize(d)
                         except Exception as e:
                             try:
-                                d = dateparse.parse_date(datestr)
+                                d = self.parse_prefix(datestr,"%Y-%m-%dT%H:%M:%S")
+                                d = pytz.timezone('UTC').localize(d)
                             except:
-                                d = None
-                                
-                            if d == None:
-                                self.stdout.write(self.style.ERROR("Unable to add datetime in %s"%PATH))
-                                print(e)
-                                return 0
+                                try:
+                                    d = self.parse_prefix(datestr,"%Y-%m-%d %H:%M:%S")
+                                    d = pytz.timezone('UTC').localize(d)
+                                except:
+                                    try:
+                                        d = dateparse.parse_date(datestr)
+                                    except:
+                                        d = None
+
+                                    if d == None:
+                                        self.stdout.write(self.style.ERROR("Unable to add datetime in %s"%PATH))
+                                        print(e)
+                                        return 0
 
                 obj[col] = d
             else:
