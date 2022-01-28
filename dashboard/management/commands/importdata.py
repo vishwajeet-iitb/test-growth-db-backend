@@ -1,6 +1,7 @@
 from genericpath import isdir
 from math import nan
 from django.core.management.base import BaseCommand
+import pytz
 from dashboard.models import Image
 import datetime
 from django.utils import dateparse
@@ -192,39 +193,33 @@ class Command(BaseCommand):
             # convert and store datetime
             if col=='date_observed':
                 warnings.simplefilter("ignore")
-                # try:
-                #     d = datetime.datetime.strptime(hdu.header[headers[col]].strip(), "%Y-%m-%dT%H:%M:%S.%f" )
-                # except:
-                #     try:
-                #         clean_date = hdu.header[headers[col]].strip()
-                #         lastT = clean_date.rfind('T')
-                #         clean_date = clean_date[:lastT]
-                #         d = datetime.datetime.strptime(clean_date.strip(), "%Y-%m-%dT%H:%M:%S.%f" )
-                #     except:
-                #         try:
-                #             d = datetime.datetime.strptime(hdu.header[headers[col]].strip(), "%Y-%m-%d %H:%M:%S.%f" )
-                #         except Exception as e:
-                #             self.stdout.write(self.style.ERROR("Unable to add datetime in %s"%PATH))
-                #             return 0
                 try:
-                    d = dateparse.parse_datetime(hdu.header[headers[col]])
-                    if d == None:
-                        self.stdout.write(self.style.ERROR("Unable to add datetime in %s"%PATH))
-
-                        return 0
-                        
-                    obj[col] = d
+                    datestr = hdu.header[headers[col]]
                 except:
-                    self.stdout.write(self.style.ERROR("Unable to add datetime in %s"%PATH))
+                    self.stdout.write(self.style.ERROR("Datetime does not exist in fits file in %s"%PATH))
                     return 0
-                #d = pytz.timezone('UTC').localize(d)
-            
-            try:
-                obj[col] = hdu.header[headers[col]]
-            except:
-                obj[col] = nan
-            
 
+                try:
+                    d = self.parse_prefix(datestr,"%Y-%m-%dT%H:%M:%S.%f")
+                except:
+                    try:
+                        d = self.parse_prefix(datestr,"%Y-%m-%d %H:%M:%S.%f")
+                    except:
+                        try:
+                            d = self.parse_prefix(datestr,"%Y-%m-%d%H:%M:%S.%f")
+                        except Exception as e:
+                            self.stdout.write(self.style.ERROR("Unable to add datetime in %s"%PATH))
+                            print(e)
+                            return 0
+
+                d = pytz.timezone('UTC').localize(d)
+                obj[col] = d
+            else:
+                try:
+                    obj[col] = hdu.header[headers[col]]
+                except:
+                    obj[col] = nan
+            
         # Healpix        
         try:
             w = wcs.WCS(hdu.header)
@@ -285,7 +280,6 @@ class Command(BaseCommand):
             obj['obs_cycle'] = proposal_params[-2]
         except:
             obj['obs_cycle'] = nan
-
 
         try:
             dbimage = Image(**obj)
@@ -352,3 +346,14 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("Updated %s entries"%success))
         self.stdout.write(self.style.ERROR("Unable to update %s entries"%(num_images-success)))
+
+    def parse_prefix(self, line, fmt):
+        try:
+            t = datetime.datetime.strptime(line, fmt)
+        except ValueError as v:
+            if len(v.args) > 0 and v.args[0].startswith('unconverted data remains: '):
+                line = line[:-(len(v.args[0]) - 26)]
+                t = datetime.datetime.strptime(line, fmt)
+            else:
+                raise
+        return t
