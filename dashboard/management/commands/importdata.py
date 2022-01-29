@@ -186,7 +186,8 @@ class Command(BaseCommand):
             obj['header_exists'] = False
             fits = astropy.io.fits.open(PATH)
 
-        hdu = fits[0]
+        hdu_header = fits[0].header
+        fits.close()
         
         obj['filepath'] = os.path.abspath(PATH)
         
@@ -195,7 +196,7 @@ class Command(BaseCommand):
             if col=='date_observed':
                 warnings.simplefilter("ignore")
                 try:
-                    datestr = hdu.header[headers[col]]
+                    datestr = hdu_header[headers[col]]
                 except:
                     self.stdout.write(self.style.ERROR("Datetime does not exist in fits file in %s"%PATH))
                     return 0
@@ -233,13 +234,13 @@ class Command(BaseCommand):
                 obj[col] = d
             else:
                 try:
-                    obj[col] = hdu.header[headers[col]]
+                    obj[col] = hdu_header[headers[col]]
                 except:
                     obj[col] = nan
             
         # Healpix        
         try:
-            w = wcs.WCS(hdu.header)
+            w = wcs.WCS(hdu_header)
         except (KeyError,ValueError):
             w = None
             self.stdout.write(self.style.WARNING("Unable to read WCS for %s"%PATH))
@@ -249,19 +250,23 @@ class Command(BaseCommand):
             try:
                 if obj['header_exists']:
                     real_img = astropy.io.fits.open(PATH)
-                    center_x = real_img[0].header['NAXIS1']/2
-                    center_y = real_img[0].header['NAXIS2']/2
+                    real_header = real_img[0].header
+                    real_img.close()
+                    center_x = real_header['NAXIS1']/2
+                    center_y = real_header['NAXIS2']/2
                 else:
-                    center_x = hdu.header['NAXIS1']/2
-                    center_y = hdu.header['NAXIS2']/2
+                    center_x = hdu_header['NAXIS1']/2
+                    center_y = hdu_header['NAXIS2']/2
             except:
                 try:
                     [head, tail] = os.path.split(PATH)
                     orginal_img_name = tail.split('-RA')[0] + '-RA.fits'
                     orginal_path = os.path.join(head.replace('reduced/',''),orginal_img_name)
                     orginal_img = astropy.io.fits.open(orginal_path)
-                    center_x = orginal_img[0].header['NAXIS1']/2
-                    center_y = orginal_img[0].header['NAXIS2']/2
+                    orig_header = orginal_img[0].header
+                    orginal_img.close()
+                    center_x = orig_header['NAXIS1']/2
+                    center_y = orig_header['NAXIS2']/2
                 except Exception as e:
                     self.stdout.write(self.style.ERROR(e))
                     print("file name %s"%PATH)
@@ -293,7 +298,7 @@ class Command(BaseCommand):
 
         # obs cycle
         try:
-            proposal_params = hdu.header['PROPNUMS'].split('-')
+            proposal_params = hdu_header['PROPNUMS'].split('-')
             obj['obs_cycle'] = proposal_params[-2]
         except:
             obj['obs_cycle'] = nan
@@ -349,9 +354,10 @@ class Command(BaseCommand):
                     fits = astropy.io.fits.open(header_file_path)
                 else:
                     fits = astropy.io.fits.open(image.filepath)
-                hdu = fits[0]
+                hdu_header = fits[0].header
+                fits.close()
                 try:
-                    newdata = {field_name:hdu.header[headers[field_name]]}
+                    newdata = {field_name:hdu_header[headers[field_name]]}
                 except:
                     newdata = {field_name:nan}
                 Image.objects.filter(pk=image.pk).update(**newdata)
