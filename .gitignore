@@ -1,3 +1,26 @@
 db.sqlite3
 astro/
+migrations/
 
+# Django #
+*.log
+*.pot
+*.pyc
+__pycache__
+media
+
+# Backup files # 
+*.bak 
+
+# Visual Studio Code # 
+.vscode/* 
+!.vscode/settings.json 
+!.vscode/tasks.json 
+!.vscode/launch.json 
+!.vscode/extensions.json 
+.history
+dashboard/__pycache__/admin.cpython-39.pyc
+dashboard/__pycache__/forms.cpython-39.pyc
+dashboard/__pycache__/admin.cpython-39.pyc
+dashboard/__pycache__/models.cpython-39.pyc
+dashboard/__pycache__/views.cpython-39.pyc
