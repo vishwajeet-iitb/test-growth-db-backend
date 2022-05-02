@@ -17,15 +17,9 @@ from django.contrib import admin
 from django.urls import path
 from django.urls.conf import include
 from api import urls
-from userlogin import views as userview
-from dashboard import views as dashview
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('register/', userview.register, name='register'),
-    path('home/', dashview.index, name='dashboard'),
-    path('check/', dashview.check, name='dashboard'),
-    path('query/', dashview.query, name='Query'),
     path('',include("django.contrib.auth.urls")),
-    path('',include('api.urls'))
+    path('api/',include('api.urls'))
 ]

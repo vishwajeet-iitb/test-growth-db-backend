@@ -1,42 +1,84 @@
+from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .serializers import ImageSerializer
 from dashboard.models import Image
+from .filters import ImageFilter
+from django.db.models import Q
+
+# import numpy as np
+# import healpy as hp
+
+@api_view(['GET'])
+def getPI(request):
+    pass
+
+@api_view(['GET'])
+def getPropNums(request):
+    pass
+
+@api_view(['GET'])
+def getPID(request):
+    pass
+
 
 @api_view(['GET'])
 def getData(request):
 
     query_data = request.query_params
     keys = request.data.keys()
-    print(query_data)
-    print(keys)
 
-    # kwargs = {}
-    # for key in keys:
-        
-    #     if query_data[key] != '' and query_data[key] != None :
-    #         kwargs[key] = query_data[key]
-
-    queriedImages = Image.objects.all()
-
-    if query_data.get('tar_name') != None:
-        if query_data.get('exact') == None:
-            pass #Raise error
-        elif query_data.get('exact'):
-            queriedImages = queriedImages.filter(tar_name=query_data['tar_name'])
-        else:
-            queriedImages = queriedImages.filter(tar_name__contains=query_data['tar_name'])
+    if query_data.get('ra') != None and query_data.get('dec') != None:
+        pass
+        # try:
+        #     ra = query_data.get('ra')
+        #     dec = query_data.get('dec')
+        #     pxl = hp.pixelfunc.ang2pix(settings.N_SIDES,theta=np.deg2rad(dec),phi=np.deg2rad(ra), lonlat=True)
+        #     R = query_data.get('radius') + hp.nside2resol(settings.N_SIDES, arcmin=True) / 60 + settings.HALF_DIAG_FOV
+        #     nearby_pxls = hp.query_disc(nside=settings.N_SIDES,vec=hp.pixelfunc.pix2vec(nside=settings.N_SIDES,ipix=pxl),radius=np.deg2rad(R))
+        #     query_set = Image.objects.filter(healpy_pxl__in=nearby_pxls)
+        # except:
+        #     query_set = Image.objects.all()
+        #     pass
+    else:
+        query_set = Image.objects.all()
     
-    if query_data.get('pi') != None:
-        queriedImages = queriedImages.filter(pi__in=query_data['pi'])
+    
+    
+    if len(query_data.getlist('pi[]'))>0:
+        query = Q()
+        for i in query_data.getlist('pi[]'):
+            query |= Q(pi=i)
+        query_set = query_set.filter(query)
 
-    if query_data.get('proposal_no') != None:
-        queriedImages = queriedImages.filter(proposal_no__in=query_data['proposal_no']) 
+    if len(query_data.getlist('proposal_no[]'))> 0:
+        query = Q()
+        for i in query_data.getlist('proposal_no[]'):
+            query |= Q(proposal_no=i)
+        query_set = query_set.filter(query)
 
-    if query_data.get('progid') != None:
-        queriedImages = queriedImages.filter(progid__in=query_data['progid']) 
+    if len(query_data.getlist('progid[]')) > 0:
+        query = Q()
+        for i in query_data.getlist('progid[]'):
+            query |= Q(progid=i)
+        query_set = query_set.filter(query)
 
-    serializer = ImageSerializer(queriedImages,many=True)
+    if len(query_data.getlist('filter_used[]'))>0:
+        query = Q()
+        for i in query_data.getlist('filter_used[]'):
+            query |= Q(filter_used=i)
+        query_set = query_set.filter(query)
 
-    # data = {"Hello":"World"}
+
+    if len(query_data.getlist('camera[]'))>0:
+        query = Q()
+        for i in query_data.getlist('camera[]'):
+            query |= Q(camera=i)
+        query_set = query_set.filter(query)
+        
+    
+    queriedImages = ImageFilter(request.query_params,queryset=query_set)
+    print(len(queriedImages.qs))
+    serializer = ImageSerializer(queriedImages.qs,many=True)
+
     return Response(serializer.data)
