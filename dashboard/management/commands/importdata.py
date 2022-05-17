@@ -16,11 +16,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser) :
         parser.add_argument('--add',help="Add a single image from a path")
         parser.add_argument('--dir',help="Add images from a path")
-        parser.add_argument('--day',help="Add all images from a day")
+        parser.add_argument('--date',help="Add all images from a day")
         parser.add_argument('-i', nargs=3, help="Find folders of days and add them. Provide path, startdate, enddate in the format yyyymmdd")
         parser.add_argument('--migrate', nargs=2 ,help='Migrate file path to NAS. Inputs - date in format yyyymmdd and new path including the folder name')
         parser.add_argument('--remake', help='Add new fields to database based on headers of fits file')
-        parser.add_argument('--header',help="False if respective header file should not be used for making the database")
+        parser.add_argument('--use_header_file',help="False if respective header file should not be used for making the database")
 
     def handle(self, *args, **options):
         count_s = 0
@@ -29,11 +29,11 @@ class Command(BaseCommand):
         
         add = options['add']
         folder = options['dir']
-        day = options['day']
+        day = options['date']
         bulk = options['i']
         migrateData = options['migrate']
         remakeParam = options['remake']
-        headerRequired = False if options['header']=='False' else True        
+        headerRequired = False if options['use_header_file']=='False' else True        
 
         if add != None and folder == None and day == None and bulk == None and migrateData == None and remakeParam == None:
             if not os.path.exists(add):

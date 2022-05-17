@@ -6,8 +6,8 @@ from dashboard.models import Image
 from .filters import ImageFilter
 from django.db.models import Q
 
-# import numpy as np
-# import healpy as hp
+import numpy as np
+import healpy as hp
 
 @api_view(['GET'])
 def getPI(request):
@@ -29,17 +29,18 @@ def getData(request):
     keys = request.data.keys()
 
     if query_data.get('ra') != None and query_data.get('dec') != None:
-        pass
-        # try:
-        #     ra = query_data.get('ra')
-        #     dec = query_data.get('dec')
-        #     pxl = hp.pixelfunc.ang2pix(settings.N_SIDES,theta=np.deg2rad(dec),phi=np.deg2rad(ra), lonlat=True)
-        #     R = query_data.get('radius') + hp.nside2resol(settings.N_SIDES, arcmin=True) / 60 + settings.HALF_DIAG_FOV
-        #     nearby_pxls = hp.query_disc(nside=settings.N_SIDES,vec=hp.pixelfunc.pix2vec(nside=settings.N_SIDES,ipix=pxl),radius=np.deg2rad(R))
-        #     query_set = Image.objects.filter(healpy_pxl__in=nearby_pxls)
-        # except:
-        #     query_set = Image.objects.all()
-        #     pass
+        try:
+            ra = float(query_data.get('ra'))
+            dec = float(query_data.get('dec'))
+            pxl = hp.pixelfunc.ang2pix(settings.N_SIDES,theta=np.deg2rad(dec),phi=np.deg2rad(ra), lonlat=True)
+            R = float(query_data.get('radius'))/60 + hp.nside2resol(settings.N_SIDES, arcmin=True) / 60 + settings.HALF_DIAG_FOV
+            nearby_pxls = hp.query_disc(nside=settings.N_SIDES,vec=hp.pixelfunc.pix2vec(nside=settings.N_SIDES,ipix=pxl),radius=np.deg2rad(R))
+            print("ra-dec ",ra," ",dec)
+            print(nearby_pxls)
+            query_set = Image.objects.filter(healpy_pxl__in=nearby_pxls)
+        except:
+            query_set = Image.objects.all()
+            pass
     else:
         query_set = Image.objects.all()
     
