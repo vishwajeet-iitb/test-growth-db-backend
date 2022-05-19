@@ -2,6 +2,7 @@ from genericpath import isdir
 from math import nan
 from django.core.management.base import BaseCommand
 import pytz
+from GrowthInterface import settings
 from dashboard.models import Image
 import datetime
 from django.utils import dateparse
@@ -21,6 +22,7 @@ class Command(BaseCommand):
         parser.add_argument('--migrate', nargs=2 ,help='Migrate file path to NAS. Inputs - date in format yyyymmdd and new path including the folder name')
         parser.add_argument('--remake', help='Add new fields to database based on headers of fits file')
         parser.add_argument('--use_header_file',help="False if respective header file should not be used for making the database")
+        parser.add_argument('-u',help="Update healpxls")
 
     def handle(self, *args, **options):
         count_s = 0
@@ -34,6 +36,11 @@ class Command(BaseCommand):
         migrateData = options['migrate']
         remakeParam = options['remake']
         headerRequired = False if options['use_header_file']=='False' else True        
+        healpxlUpdate = options['u']
+
+        if healpxlUpdate:
+            self.update_healpxl()
+            return
 
         if add != None and folder == None and day == None and bulk == None and migrateData == None and remakeParam == None:
             if not os.path.exists(add):
@@ -170,8 +177,6 @@ class Command(BaseCommand):
         return [count_s,count_err,countedit]
 
     def addImage(self,PATH,headerRequired):
-        
-        NSIDE = 64 # for healpix
 
         headers = Image.headers
         cols = headers.keys()
@@ -275,7 +280,7 @@ class Command(BaseCommand):
             [ra, dec] = w.wcs_pix2world(center_x,center_y,1)
             obj['center_RA'] = ra
             obj['center_Dec'] = dec
-            obj['healpy_pxl'] = hp.pixelfunc.ang2pix(NSIDE,theta=np.deg2rad(dec),phi=np.deg2rad(ra), lonlat=True)
+            obj['healpy_pxl'] = hp.pixelfunc.ang2pix(settings.N_SIDES,theta=ra,phi=dec,lonlat=True)
             
             # camera
             if center_y*2 == 1472:
@@ -380,3 +385,25 @@ class Command(BaseCommand):
             else:
                 raise
         return t
+    
+    def update_healpxl(self):
+        images = Image.objects.all()
+        num_images = len(images)
+        success = 0
+        
+        for image in images:
+            try:
+                print("{} of {}".format(success,num_images))
+                ra = image.center_RA
+                dec = image.center_Dec
+                newdata = {'healpy_pxl':hp.pixelfunc.ang2pix(settings.N_SIDES,theta=ra,phi=dec,lonlat=True)}
+                Image.objects.filter(pk=image.pk).update(**newdata)
+                success += 1
+            except Exception as e:
+                print(e)
+                print(ra,dec)
+                print('Unable to update ',image.filepath)
+            
+        
+        self.stdout.write(self.style.SUCCESS("Updated %s entries"%success))
+        self.stdout.write(self.style.ERROR("Unable to update %s entries"%(num_images-success)))
