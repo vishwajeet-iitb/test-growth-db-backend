@@ -8,7 +8,6 @@ class ImageFilter(django_filters.FilterSet):
     tar_name = django_filters.CharFilter(field_name="tar_name")
     tar_name_match = django_filters.CharFilter(field_name="tar_name",lookup_expr="icontains")
 
-    date = django_filters.DateFromToRangeFilter(field_name="date_observed",method="date_query")
 
     #main properties
     tel_alt = django_filters.RangeFilter(field_name="tel_alt")
@@ -20,10 +19,10 @@ class ImageFilter(django_filters.FilterSet):
     # psf_zp = django_filters.RangeFilter(field_name="psf_zp")
 
     #secondary properites
-    img_sub = django_filters.BooleanFilter(field_name="diff_exists")
+    # img_sub = django_filters.BooleanFilter(field_name="diff_exists")
 
-    obs_tile = django_filters.BooleanFilter(method="is_obs_tile")
-    psf_type = django_filters.BooleanFilter(field_name="psf_type")
+    # obs_tile = django_filters.BooleanFilter(method="is_obs_tile")
+    # psf_type = django_filters.BooleanFilter(field_name="psf_type")
 
 
 
