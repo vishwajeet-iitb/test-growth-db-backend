@@ -5,7 +5,7 @@ from django.db.models import Q
 class ImageFilter(django_filters.FilterSet):
     
     sidereal = django_filters.BooleanFilter(method="sidereal_query")    
-    tar_name = django_filters.CharFilter(field_name="tar_name")
+    tar_name = django_filters.CharFilter(field_name="tar_name",lookup_expr="iexact")
     tar_name_match = django_filters.CharFilter(field_name="tar_name",lookup_expr="icontains")
 
 
@@ -19,10 +19,9 @@ class ImageFilter(django_filters.FilterSet):
     # psf_zp = django_filters.RangeFilter(field_name="psf_zp")
 
     #secondary properites
-    # img_sub = django_filters.BooleanFilter(field_name="diff_exists")
-
+    img_sub = django_filters.BooleanFilter(method="is_diff_exists")
     obs_tile = django_filters.BooleanFilter(method="is_obs_tile")
-    # psf_type = django_filters.BooleanFilter(field_name="psf_type")
+    psf_type = django_filters.BooleanFilter(method="include_psf_type")
 
 
 
@@ -43,14 +42,26 @@ class ImageFilter(django_filters.FilterSet):
 
     
     def sidereal_query(self,queryset,name,value):
-        if value:
-            query1 = Q(ra_rate__gt=0)
-            query2 = Q(dec_rate__gt=0)
+        if value==False:
+            query1 = Q(ra_rate=0)
+            query2 = Q(dec_rate=0)
             queryset = queryset.filter(query1&query2)
         return queryset
 
     def is_obs_tile(self,queryset,name,value):
         if value:
             query = Q(tile_id__gt=0)
+            queryset = queryset.filter(query)
+        return queryset
+    
+    def is_diff_exists(self,queryset,name,value):
+        if value==True:
+            query = Q(diff_exists=True)
+            queryset = queryset.filter(query)
+        return queryset
+
+    def include_psf_type(self,queryset,name,value):
+        if value==False:
+            query = Q(psf_type="PSF")
             queryset = queryset.filter(query)
         return queryset

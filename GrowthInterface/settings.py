@@ -130,4 +130,4 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 N_SIDES = 64
-HALF_DIAG_FOV = 0.77
+HALF_DIAG_FOV = 0.38
