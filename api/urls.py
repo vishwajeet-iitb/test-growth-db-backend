@@ -4,10 +4,10 @@ from . import views
 from rest_framework_simplejwt.views import (TokenObtainPairView,TokenRefreshView)
 
 urlpatterns = [
-    path('images',views.getData),
-    path('pi',views.getPI),
-    path('propnums',views.getPropNums),
-    path('pid',views.getPID),
+    path('images',views.ImageView.as_view()),
+    path('pi',views.PIView.as_view()),
+    path('propnums',views.PropNumsView.as_view()),
+    path('pid',views.PIDView.as_view()),
     path('api-token/', TokenObtainPairView.as_view()),
     path('api-token-refresh/', TokenRefreshView.as_view()),
 ]
