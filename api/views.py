@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view,authentication_classes
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from .serializers import ImageSerializer
 from dashboard.models import Image
 from .filters import ImageFilter
@@ -14,18 +15,21 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 
 @api_view(['GET'])
+@authentication_classes([JWTAuthentication])
 def getPI(request):
     res = Image.objects.values('pi').distinct()
     pi_list = [i['pi'] for i in res]
     return Response(pi_list)
 
 @api_view(['GET'])
+@authentication_classes([JWTAuthentication])
 def getPropNums(request):
     res = Image.objects.values('proposal_no').distinct()
     propNums_list = [i['proposal_no'] for i in res]
     return Response(propNums_list)
 
 @api_view(['GET'])
+@authentication_classes([JWTAuthentication])
 def getPID(request):
     res = Image.objects.values('progid').distinct()
     pid_list = [i['progid'] for i in res]
@@ -33,6 +37,7 @@ def getPID(request):
 
 
 @api_view(['GET'])
+@authentication_classes([JWTAuthentication])
 def getData(request):
 
     query_data = request.query_params
