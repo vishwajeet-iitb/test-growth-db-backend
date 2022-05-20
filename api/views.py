@@ -15,15 +15,21 @@ from astropy import units as u
 
 @api_view(['GET'])
 def getPI(request):
-    pass
+    res = Image.objects.values('pi').distinct()
+    pi_list = [i['pi'] for i in res]
+    return Response(pi_list)
 
 @api_view(['GET'])
 def getPropNums(request):
-    pass
+    res = Image.objects.values('proposal_no').distinct()
+    propNums_list = [i['proposal_no'] for i in res]
+    return Response(propNums_list)
 
 @api_view(['GET'])
 def getPID(request):
-    pass
+    res = Image.objects.values('progid').distinct()
+    pid_list = [i['progid'] for i in res]
+    return Response(pid_list)
 
 
 @api_view(['GET'])

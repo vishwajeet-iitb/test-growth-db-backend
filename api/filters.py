@@ -21,7 +21,7 @@ class ImageFilter(django_filters.FilterSet):
     #secondary properites
     # img_sub = django_filters.BooleanFilter(field_name="diff_exists")
 
-    # obs_tile = django_filters.BooleanFilter(method="is_obs_tile")
+    obs_tile = django_filters.BooleanFilter(method="is_obs_tile")
     # psf_type = django_filters.BooleanFilter(field_name="psf_type")
 
 
@@ -53,12 +53,4 @@ class ImageFilter(django_filters.FilterSet):
         if value:
             query = Q(tile_id__gt=0)
             queryset = queryset.filter(query)
-        return queryset
-
-    def date_query(self,queryset,name,value):
-        if value:
-            print(len(queryset))
-            query = Q(date_observed=value)
-            queryset = queryset.filter(query)
-            print(len(queryset))
         return queryset
