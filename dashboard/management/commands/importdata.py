@@ -401,6 +401,7 @@ class Command(BaseCommand):
                 success += 1
             except:
                 try:
+                    print("updating wcs")
                     fits = astropy.io.fits.open(image.filepath)
                     hdu_header = fits[0].header
                     fits.close()
@@ -423,7 +424,7 @@ class Command(BaseCommand):
                 except Exception as e:
                     print(e)
                     print(ra,dec)
-                    print('Unable to update ',image.filepath)
+                    print('Unable to update wcs ',image.filepath)
             
         
         self.stdout.write(self.style.SUCCESS("Updated %s entries"%success))
