@@ -393,16 +393,37 @@ class Command(BaseCommand):
         
         for image in images:
             try:
-                print("{} of {}".format(success,num_images))
+                # print("{} of {}".format(success,num_images))
                 ra = image.center_RA
                 dec = image.center_Dec
                 newdata = {'healpy_pxl':hp.pixelfunc.ang2pix(settings.N_SIDES,theta=ra,phi=dec,lonlat=True)}
-                Image.objects.filter(pk=image.pk).update(**newdata)
+                # Image.objects.filter(pk=image.pk).update(**newdata)
                 success += 1
-            except Exception as e:
-                print(e)
-                print(ra,dec)
-                print('Unable to update ',image.filepath)
+            except:
+                try:
+                    fits = astropy.io.fits.open(image.filepath)
+                    hdu_header = fits[0].header
+                    fits.close()
+                    try:
+                        w = wcs.WCS(hdu_header)
+                    except (KeyError,ValueError):
+                        w = None
+                        self.stdout.write(self.style.WARNING("Unable to read WCS for %s"%image.filepath))
+                        continue
+                    [ra, dec] = w.wcs_pix2world(image.center_RA,image.center_Dec,1)
+                    newdata = {'healpy_pxl':hp.pixelfunc.ang2pix(settings.N_SIDES,theta=ra,phi=dec,lonlat=True)}
+                    newdata['center_RA'] = ra
+                    newdata['center_Dec'] = dec
+                    print("-----------")
+                    print("Updated data")
+                    print(ra,dec)
+                    print("------------")
+                    Image.objects.filter(pk=image.pk).update(**newdata)
+                    success += 1
+                except Exception as e:
+                    print(e)
+                    print(ra,dec)
+                    print('Unable to update ',image.filepath)
             
         
         self.stdout.write(self.style.SUCCESS("Updated %s entries"%success))

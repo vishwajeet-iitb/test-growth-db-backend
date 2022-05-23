@@ -112,9 +112,9 @@ class ImageView(APIView):
             for i in query_data.getlist('camera[]'):
                 query |= Q(camera=i)
             query_set = query_set.filter(query)
-        print(len(query_set))
+       
         queriedImages = ImageFilter(request.query_params,queryset=query_set)
-        print(len(queriedImages.qs))
+       
         serializer = ImageSerializer(queriedImages.qs,many=True)
 
         return Response(serializer.data)
