@@ -339,6 +339,8 @@ class Command(BaseCommand):
                     image.filepath = os.path.abspath(PATH)
                     image.save()
                     success += 1
+                else:
+                    print("File does not exist at ",PATH)
             except:
                 print('Unable to update ',image.filepath)
         
@@ -412,14 +414,14 @@ class Command(BaseCommand):
                         self.stdout.write(self.style.WARNING("Unable to read WCS for %s"%image.filepath))
                         continue
                     [ra, dec] = w.wcs_pix2world(image.center_RA,image.center_Dec,1)
-                    newdata = {'healpy_pxl':hp.pixelfunc.ang2pix(settings.N_SIDES,theta=ra,phi=dec,lonlat=True)}
-                    newdata['center_RA'] = ra
-                    newdata['center_Dec'] = dec
+                    #newdata = {'healpy_pxl':hp.pixelfunc.ang2pix(settings.N_SIDES,theta=ra,phi=dec,lonlat=True)}
+                    #newdata['center_RA'] = ra
+                    #newdata['center_Dec'] = dec
                     print("-----------")
                     print("Updated data")
                     print(ra,dec)
                     print("------------")
-                    Image.objects.filter(pk=image.pk).update(**newdata)
+                    #Image.objects.filter(pk=image.pk).update(**newdata)
                     success += 1
                 except Exception as e:
                     print(e)
