@@ -16,14 +16,11 @@ class ImageFilter(django_filters.FilterSet):
     fwhm = django_filters.RangeFilter(field_name="fwhm")
     lim_mag3 = django_filters.RangeFilter(field_name="lim_mag3")
     lim_mag5 = django_filters.RangeFilter(field_name="lim_mag5")
-    # psf_zp = django_filters.RangeFilter(field_name="psf_zp")
 
     #secondary properites
     img_sub = django_filters.BooleanFilter(method="is_diff_exists")
     obs_tile = django_filters.BooleanFilter(method="is_obs_tile")
     psf_type = django_filters.BooleanFilter(method="include_psf_type")
-
-
 
     air_mass = django_filters.RangeFilter(field_name="air_mass")
     avg = django_filters.RangeFilter(field_name="avg")

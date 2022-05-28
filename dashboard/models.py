@@ -1,20 +1,27 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# Create your models here.
+# For access control
 class Proposal(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     heading = models.CharField(max_length=255)
 
 class Image(models.Model):
+    
     jd = models.FloatField(blank=False)
     date_observed = models.DateTimeField(auto_now=False,auto_now_add=False) 
-    exptime = models.FloatField(null=True, blank=True)
+
     tar_ra = models.FloatField(null=True, blank=True)
     tar_dec = models.FloatField(null=True, blank=True)
     tar_name = models.CharField(max_length=20, blank=True)
+    ra_rate = models.FloatField(null=True, blank=True)
+    dec_rate = models.FloatField(null=True, blank=True)
 
+    proposal_no = models.CharField(max_length=20,null=True, blank=True)
+    progid = models.CharField(max_length=20,null=True, blank=True)
+    pi = models.CharField(max_length=20,null=True, blank=True)
 
+    exptime = models.FloatField(null=True, blank=True)
     ccd_temp = models.FloatField(null=True, blank=True)
     tel_alt = models.FloatField(null=True, blank=True)
     tel_az = models.FloatField(null=True, blank=True)
@@ -24,11 +31,6 @@ class Image(models.Model):
     stdev = models.FloatField(null=True, blank=True)
     filter_used = models.CharField(max_length=20,null=True, blank=True)    
     focuser = models.CharField(max_length=20,null=True, blank=True)
-    ra_rate = models.FloatField(null=True, blank=True)
-    dec_rate = models.FloatField(null=True, blank=True)
-    proposal_no = models.CharField(max_length=20,null=True, blank=True)
-    progid = models.CharField(max_length=20,null=True, blank=True)
-    pi = models.CharField(max_length=20,null=True, blank=True)
     tile_id = models.FloatField(null=True, blank=True)
     
     

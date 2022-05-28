@@ -119,6 +119,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("Updated %s entries"%countedit))
             self.stdout.write(self.style.WARNING("Unable to add %s entries"%count_err))
 
+    # Add images for a whole day
     def addDay(self,PATH, headerRequired):
         count_s = 0
         count_err = 0
@@ -148,6 +149,7 @@ class Command(BaseCommand):
         
         return [count_s, count_err, countedit]
 
+    # Add images from a directory 
     def addImages(self,PATH,headerRequired):
         count_s = 0
         count_err = 0
@@ -176,6 +178,7 @@ class Command(BaseCommand):
 
         return [count_s,count_err,countedit]
 
+    # Add a single image
     def addImage(self,PATH,headerRequired):
 
         headers = Image.headers
@@ -290,7 +293,7 @@ class Command(BaseCommand):
             else:
                 obj['camera'] = 'SBIG'
 
-        # if difference file exists
+        # if difference file (image subtraction) exists
         [head, tail] = os.path.split(PATH)
         diff_files = [name for name in os.listdir(head) if name.endswith('.diff')]
         file_name = tail.split('-RA')
@@ -327,6 +330,7 @@ class Command(BaseCommand):
             print("file name %s"%PATH)
             return 0
 
+    # Change the filepath in the database (usually done when the days observations are moved to NAS)
     def migrateDataNAS(self,date,newpath):
         images = Image.objects.filter(filepath__contains='/'+date+'/')
         num_images = len(images)
@@ -345,7 +349,8 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("Updated %s entries"%success))
         self.stdout.write(self.style.ERROR("Unable to update %s entries"%(num_images-success)))
-        
+
+    #  Add values to the newly added field in the database
     def remakeDB(self, field_name):
         images = Image.objects.all()
         num_images = len(images)
@@ -375,6 +380,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Updated %s entries"%success))
         self.stdout.write(self.style.ERROR("Unable to update %s entries"%(num_images-success)))
 
+    # Parsing dates 
     def parse_prefix(self, line, fmt):
         try:
             t = datetime.datetime.strptime(line, fmt)
@@ -386,6 +392,7 @@ class Command(BaseCommand):
                 raise
         return t
     
+    # Update healpy pxl (No longer required)
     def update_healpxl(self):
         images = Image.objects.all()
         num_images = len(images)

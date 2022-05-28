@@ -46,6 +46,7 @@ class ImageView(APIView):
 
         query_data = request.query_params
 
+        # RA-DEC filter
         if query_data.get('ra') != None and query_data.get('dec') != None:
             try:
                 ra = float(query_data.get('ra'))
@@ -73,6 +74,7 @@ class ImageView(APIView):
         else:
             query_set = Image.objects.all()
 
+        # Date filter
         if query_data.get('date_after') != None:
             date_after = timezone.datetime.strptime(query_data.get('date_after'),'%Y-%m-%d')
             query_set = Image.objects.filter(date_observed__gte=date_after)
@@ -82,31 +84,35 @@ class ImageView(APIView):
             date_before = date_before + timedelta(days=1)
             query_set = query_set.filter(date_observed__lte=date_before)
 
+        # Filter by PI
         if len(query_data.getlist('pi[]'))>0:
             query = Q()
             for i in query_data.getlist('pi[]'):
                 query |= Q(pi=i)
             query_set = query_set.filter(query)
 
+        # Filter by Proposal Number
         if len(query_data.getlist('proposal_no[]'))> 0:
             query = Q()
             for i in query_data.getlist('proposal_no[]'):
                 query |= Q(proposal_no=i)
             query_set = query_set.filter(query)
 
+        # Filter by Project ID
         if len(query_data.getlist('progid[]')) > 0:
             query = Q()
             for i in query_data.getlist('progid[]'):
                 query |= Q(progid=i)
             query_set = query_set.filter(query)
 
+        # Filter by filter used in the image
         if len(query_data.getlist('filter_used[]'))>0:
             query = Q()
             for i in query_data.getlist('filter_used[]'):
                 query |= Q(filter_used=i)
             query_set = query_set.filter(query)
 
-
+        # Filter by camera used
         if len(query_data.getlist('camera[]'))>0:
             query = Q()
             for i in query_data.getlist('camera[]'):
