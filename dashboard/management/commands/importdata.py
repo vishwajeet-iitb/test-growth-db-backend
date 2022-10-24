@@ -345,7 +345,8 @@ class Command(BaseCommand):
                     success += 1
                 elif not os.path.exists(PATH):
                     print("File does not exist at ",PATH)
-            except:
+            except Exception as e:
+                print(e)
                 print('Unable to update ',image.filepath)
         
 
