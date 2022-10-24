@@ -343,7 +343,7 @@ class Command(BaseCommand):
                     image.filepath = os.path.abspath(PATH)
                     image.save()
                     success += 1
-                else:
+                elif not os.path.exists(PATH):
                     print("File does not exist at ",PATH)
             except:
                 print('Unable to update ',image.filepath)
