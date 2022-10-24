@@ -339,7 +339,7 @@ class Command(BaseCommand):
             try:
                 tail = image.filepath.split('/'+date+'/')[1]
                 PATH = os.path.join(newpath,date,tail)
-                if os.path.exists(PATH) and not os.path.samefile(PATH,image.filepath):
+                if os.path.exists(PATH) and PATH!=image.filepath:
                     image.filepath = os.path.abspath(PATH)
                     image.save()
                     success += 1
